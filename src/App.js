@@ -1,6 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs } from 'firebase/firestore'
+
+// Initialize Cloud Firestore through Firebase
+// import { initializeApp } from "firebase/app"
+// import { getFirestore } from "firebase/firestore"
+const firebaseConfig = initializeApp({
+  apiKey: "AIzaSyAbBTNXgod0UkTMsgIxjupgfBk3YFYQ8jk",
+  authDomain: "chat-app-66901-dev.firebaseapp.com",
+  databaseURL: "https://chat-app-66901-dev-default-rtdb.firebaseio.com",
+  projectId: "chat-app-66901-dev",
+  storageBucket: "chat-app-66901-dev.appspot.com",
+  messagingSenderId: "556943717887",
+  appId: "1:556943717887:web:4be09fd9ccb6425cade3ca"
+});
+
+const db = getFirestore(firebaseConfig);
 
 function App() {
+  const [channels, setChannels] = useState([
+    { topic: 'Something hardcoded', id: 'general'}
+  ])
+
+
+  useEffect( () => {
+   const getCollections = async (db) => {
+     const collectionList = collection(db, 'channels');
+     const collectionSnap = await getDocs(collectionList);
+     const output = collectionSnap.docs.map(doc => doc.data());
+     return output
+   }
+   getCollections(db)
+  }, [])
+
   return (
     <div className="App">
       <div className="Nav">
@@ -11,17 +43,16 @@ function App() {
             src="https://placekitten.com/64/64"
           />
           <div>
-            <div>Ryan Peterson Florence</div>
+            <div>Jared Hightower</div>
             <div>
               <button className="text-button">log out</button>
             </div>
           </div>
         </div>
         <nav className="ChannelNav">
-          <a href="/channel/awesome"># awesome</a>
-          <a className="active" href="/channel/general">
-            # general
-          </a>
+        {channels.map(channel => (
+          <a href={`/channel/${channel.id}`}># {channel.id}</a>
+        ))}
         </nav>
       </div>
       <div className="Channel">
@@ -37,14 +68,14 @@ function App() {
             <div>
               <div className="Day">
                 <div className="DayLine" />
-                <div className="DayText">12/6/2018</div>
+                <div className="DayText">5/6/2021</div>
                 <div className="DayLine" />
               </div>
               <div className="Message with-avatar">
                 <div className="Avatar" />
                 <div className="Author">
                   <div>
-                    <span className="UserName">Ryan Florence </span>
+                    <span className="UserName">Jared Hightower </span>
                     <span className="TimeStamp">3:37 PM</span>
                   </div>
                   <div className="MessageContent">Alright, lets do this.</div>
@@ -65,7 +96,7 @@ function App() {
           <div>
             <div className="Member">
               <div className="MemberStatus offline" />
-              Ryan Florence
+              Jared Hightower
             </div>
             <div className="Member">
               <div className="MemberStatus online" />
