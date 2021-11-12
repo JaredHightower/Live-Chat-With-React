@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getFirestore, collection, doc, onSnapshot } from "firebase/firestore";
 
 const firebaseConfig = initializeApp({
   apiKey: "AIzaSyAbBTNXgod0UkTMsgIxjupgfBk3YFYQ8jk",
@@ -17,19 +17,18 @@ const db = getFirestore(firebaseConfig);
 function App() {
   const [channels, setChannels] = useState([]);
 
-  useEffect(() => {
-    const getCollections = async (db) => {
-      const collectionList = collection(db, "channels");
-      const collectionSnap = await getDocs(collectionList);
-      const snapShotOutput = collectionSnap.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
-      setChannels(snapShotOutput);
-      return snapShotOutput;
-    };
-    getCollections(db);
-  }, []);
+  useEffect(
+    () =>
+      onSnapshot(collection(db, "channels"), (snapshot) => {
+        setChannels(
+          snapshot.docs.map((doc) => ({
+            ...doc.data(),
+            id: doc.id,
+          }))
+        );
+      }),
+    []
+  );
 
   return (
     <div className="App">
