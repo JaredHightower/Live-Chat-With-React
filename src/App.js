@@ -15,9 +15,7 @@ const firebaseConfig = initializeApp({
 const db = getFirestore(firebaseConfig);
 
 function App() {
-  const [channels, setChannels] = useState([
-    { topic: "Something hardcoded", id: "general" },
-  ]);
+  const [channels, setChannels] = useState([]);
 
   useEffect(() => {
     const getCollections = async (db) => {
@@ -27,7 +25,7 @@ function App() {
         ...doc.data(),
         id: doc.id,
       }));
-
+      setChannels(snapShotOutput);
       return snapShotOutput;
     };
     getCollections(db);
