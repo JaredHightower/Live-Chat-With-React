@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore'
+import React, { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, getDocs, doc } from "firebase/firestore";
 
-// Initialize Cloud Firestore through Firebase
-// import { initializeApp } from "firebase/app"
-// import { getFirestore } from "firebase/firestore"
 const firebaseConfig = initializeApp({
   apiKey: "AIzaSyAbBTNXgod0UkTMsgIxjupgfBk3YFYQ8jk",
   authDomain: "chat-app-66901-dev.firebaseapp.com",
@@ -12,26 +9,29 @@ const firebaseConfig = initializeApp({
   projectId: "chat-app-66901-dev",
   storageBucket: "chat-app-66901-dev.appspot.com",
   messagingSenderId: "556943717887",
-  appId: "1:556943717887:web:4be09fd9ccb6425cade3ca"
+  appId: "1:556943717887:web:4be09fd9ccb6425cade3ca",
 });
 
 const db = getFirestore(firebaseConfig);
 
 function App() {
   const [channels, setChannels] = useState([
-    { topic: 'Something hardcoded', id: 'general'}
-  ])
+    { topic: "Something hardcoded", id: "general" },
+  ]);
 
+  useEffect(() => {
+    const getCollections = async (db) => {
+      const collectionList = collection(db, "channels");
+      const collectionSnap = await getDocs(collectionList);
+      const snapShotOutput = collectionSnap.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
 
-  useEffect( () => {
-   const getCollections = async (db) => {
-     const collectionList = collection(db, 'channels');
-     const collectionSnap = await getDocs(collectionList);
-     const output = collectionSnap.docs.map(doc => doc.data());
-     return output
-   }
-   getCollections(db)
-  }, [])
+      return snapShotOutput;
+    };
+    getCollections(db);
+  }, []);
 
   return (
     <div className="App">
@@ -50,9 +50,9 @@ function App() {
           </div>
         </div>
         <nav className="ChannelNav">
-        {channels.map(channel => (
-          <a href={`/channel/${channel.id}`}># {channel.id}</a>
-        ))}
+          {channels.map((channel) => (
+            <a href={`/channel/${channel.id}`}># {channel.id}</a>
+          ))}
         </nav>
       </div>
       <div className="Channel">
