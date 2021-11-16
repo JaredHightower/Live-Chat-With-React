@@ -1,12 +1,19 @@
 import React from 'react';
-import { db } from './firebase'
+import { db, collection, addDoc } from './firebase'
 
 export default function ChatInputBox() {
     return (
         <form onSubmit={event => {
             event.preventDefault();
             const value = event.target.elements[0].value
-            return value
+            const addGMToDatabase = async () => {
+                const addDataToFirebase = addDoc(collection(db, 'channels/general/messages'), {
+                    text: value,
+                    createdAt: new Date()
+                })
+                return await addDataToFirebase
+            }
+            addGMToDatabase();
         }} className="ChatInputBox">
             <input className="ChatInput" placeholder="Message #general" />
         </form>
