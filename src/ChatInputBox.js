@@ -14,6 +14,7 @@ export default function ChatInputBox() {
                 return await addDataToFirebase
             }
             addGMToDatabase();
+            event.target.reset();
         }} className="ChatInputBox">
             <input className="ChatInput" placeholder="Message #general" />
         </form>
