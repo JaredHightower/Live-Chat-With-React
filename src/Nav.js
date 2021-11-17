@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot } from './firebase';
+import { db } from './firebase';
+import { collection, onSnapshot } from "firebase/firestore";
 
 export default function Nav() {
     const [channels, setChannels] = useState([]);

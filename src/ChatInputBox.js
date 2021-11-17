@@ -1,5 +1,6 @@
 import React from 'react';
-import { db, collection, addDoc } from './firebase'
+import { db } from './firebase'
+import { collection, addDoc } from "firebase/firestore"
 
 export default function ChatInputBox() {
     return (

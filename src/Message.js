@@ -1,32 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, query, orderBy } from './firebase';
+import React from 'react';
+import useCollection from './useCollection';
 
 export default function Message() {
-    const [messages, setMessages] = useState([]);
-
-    useEffect(() => {
-        const checkMessageIdx = async () => {
-            const collectionRef = collection(db, 'channels/general/messages')
-            const q = query(collectionRef, orderBy('createdAt'))
-            await onSnapshot(q, (snapShot) => {
-                setMessages(
-                    snapShot.docs.map(doc => ({
-                        ...doc.data(),
-                        id: doc.id
-                    }))
-                )
-            });
-
-        }
-        checkMessageIdx()
-    }, []);
+    const messages = useCollection('channels/general/messages', 'createdAt')
 
     return (
         <div className="Messages">
             <div className="EndOfMessages">That's every message!</div>
             {messages.map((message, index) => {
                 return index === 0 ? (
-                    <div>
+                    <div key={message.id}>
                         <div className="Day">
                             <div className="DayLine" />
                             <div className="DayText">5/6/2021</div>
@@ -44,7 +27,7 @@ export default function Message() {
                         </div>
                     </div>
                 ) : (
-                    <div>
+                    <div key={message.id}>
                         <div className="Message no-avatar">
                             <div className="MessageContent">{message.text}</div>
                         </div>
