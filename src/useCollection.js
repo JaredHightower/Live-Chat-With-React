@@ -16,15 +16,16 @@ export default function useCollection(path, orderItemsBy) {
                     }))
                 )
             });
+        } else {
+            onSnapshot(collection(db, path), (snapshot) => {
+                setDocs(
+                    snapshot.docs.map((doc) => ({
+                        ...doc.data(),
+                        id: doc.id,
+                    }))
+                );
+            });
         }
-        return onSnapshot(collection(db, path), (snapshot) => {
-            setDocs(
-                snapshot.docs.map((doc) => ({
-                    ...doc.data(),
-                    id: doc.id,
-                }))
-            );
-        });
     }, [path, orderItemsBy]);
     return docs
 }

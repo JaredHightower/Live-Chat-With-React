@@ -1,7 +1,7 @@
 import React from 'react';
 import useCollection from './useCollection';
 
-export default function Nav() {
+export default function Nav({ user, logout }) {
     const channels = useCollection('channels')
 
     return (
@@ -10,12 +10,12 @@ export default function Nav() {
                 <img
                     className="UserImage"
                     alt="whatever"
-                    src="https://placekitten.com/64/64"
+                    src={user.photoUrl}
                 />
                 <div>
-                    <div>Jared Hightower</div>
+                    <div>{user.displayName}</div>
                     <div>
-                        <button className="text-button">log out</button>
+                        <button onClick={logout} className="text-button">log out</button>
                     </div>
                 </div>
             </div>

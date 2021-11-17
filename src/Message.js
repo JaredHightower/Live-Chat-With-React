@@ -27,6 +27,7 @@ export default function Message() {
                         </div>
                     </div>
                 ) : (
+
                     <div key={message.id}>
                         <div className="Message no-avatar">
                             <div className="MessageContent">{message.text}</div>
