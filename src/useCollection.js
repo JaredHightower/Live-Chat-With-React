@@ -5,7 +5,7 @@ import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 export default function useCollection(path, orderItemsBy) {
     const [docs, setDocs] = useState([]);
     useEffect(() => {
-        const checkMessageIdx = () => {
+        if (orderItemsBy) {
             const collectionRef = collection(db, path)
             const q = query(collectionRef, orderBy(orderItemsBy))
             onSnapshot(q, (snapShot) => {
@@ -17,7 +17,14 @@ export default function useCollection(path, orderItemsBy) {
                 )
             });
         }
-        return checkMessageIdx();
+        return onSnapshot(collection(db, path), (snapshot) => {
+            setDocs(
+                snapshot.docs.map((doc) => ({
+                    ...doc.data(),
+                    id: doc.id,
+                }))
+            );
+        });
     }, [path, orderItemsBy]);
     return docs
 }
