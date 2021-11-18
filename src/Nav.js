@@ -1,5 +1,6 @@
 import React from 'react';
 import useCollection from './useCollection';
+import { Link } from '@reach/router';
 
 export default function Nav({ user, logout }) {
     const channels = useCollection('channels')
@@ -9,7 +10,7 @@ export default function Nav({ user, logout }) {
             <div className="User">
                 <img
                     className="UserImage"
-                    alt="whatever"
+                    alt="userImg"
                     src={user.photoUrl}
                 />
                 <div>
@@ -21,7 +22,7 @@ export default function Nav({ user, logout }) {
             </div>
             <nav className="ChannelNav">
                 {channels.map((channel) => (
-                    <a key={channel.id} href={`/channel/${channel.id}`}># {channel.id}</a>
+                    <Link key={channel.id} to={`/channel/${channel.id}`}># {channel.id}</Link>
                 ))}
             </nav>
         </div>

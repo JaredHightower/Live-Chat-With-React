@@ -3,6 +3,7 @@ import Nav from "./Nav";
 import Channel from "./Channel";
 import { db } from "./firebase";
 import { collection, doc, setDoc } from "firebase/firestore";
+import { Redirect, Router } from '@reach/router';
 import {
   getAuth,
   signInWithPopup,
@@ -24,7 +25,10 @@ export default function App() {
   return user ? (
     <div className="App">
       <Nav user={user} logout={handleLogout} />
-      <Channel />
+      <Router>
+        <Channel path="channel/:channelId" user={user} />
+        <Redirect from="/" to="channel/general" />
+      </Router>
     </div>
   ) : (
     <LogIn />
@@ -69,9 +73,9 @@ const useAuth = () => {
           photoUrl: firebaseUser.photoURL,
           uid: firebaseUser.uid
         }
-        setUser(user)
-        const collectionRef = collection(db, `users`)
+        const collectionRef = collection(db, 'users')
         const collectionDocs = doc(collectionRef, user.uid)
+        setUser(user)
         setDoc(collectionDocs, user)
       } else {
         setUser(null)
