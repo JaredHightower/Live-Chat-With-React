@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import useCollection from './useCollection';
-import { db } from './firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import useDocWithCache from './useDocWithCache';
+import { isSameDay, format } from 'date-fns';
+
 export default function Message({ channelId }) {
     const messages = useCollection(`channels/${channelId}/messages`, 'createdAt')
-
     return (
         <div className="Messages">
             <div className="EndOfMessages">That's every message!</div>
 
             {messages.map((message, index) => {
                 const previous = messages[index - 1]
-                const showDay = false
-                const showAvatar = !previous || message.user.id !== previous
+                const showDay = shouldShowDay(previous, message);
+                const showAvatar = shouldShowAvatar(previous, message)
                 return showAvatar ? (
                     <FirstMessageFromUser
                         key={message.id}
@@ -31,46 +31,17 @@ export default function Message({ channelId }) {
         </div>
     )
 }
-const cache = {};
-const pendingCache = {};
-
-const useDoc = (path) => {
-    const [docs, setDocs] = useState(cache[path]);
-
-    useEffect(() => {
-        if (docs) return;
-        let stillMounted = true;
-        const getFirebaseDocs = async () => {
-            const docSnap = await getDoc(doc(db, path));
-            const pending = pendingCache[path];
-            const promise = pending || (pendingCache[path] = docSnap);
-            if (stillMounted) {
-                const user = {
-                    ...promise.data(),
-                    id: promise.id
-                }
-                setDocs(user)
-                cache[path] = user
-            }
-            return () => {
-                stillMounted = false;
-            }
-
-        }
-        return getFirebaseDocs();
-    }, [docs, path])
-
-    return docs
-}
 
 const FirstMessageFromUser = ({ message, showDay }) => {
-    const author = useDoc(message.user.path)
+    const author = useDocWithCache(message.user.path)
     return (
         <div key={message.id}>
             {showDay && (
                 <div className="Day">
                     <div className="DayLine" />
-                    <div className="DayText">5/6/2021</div>
+                    <div className="DayText">
+                        {new Date(message.createdAt.seconds * 1000).toLocaleDateString()}
+                    </div>
                     <div className="DayLine" />
                 </div>
             )}
@@ -82,11 +53,37 @@ const FirstMessageFromUser = ({ message, showDay }) => {
                     <div>
                         <span className="UserName">{author && author.displayName}</span>
                         {" "}
-                        <span className="TimeStamp">3:37 PM</span>
+                        <span className="TimeStamp">
+                            {format(message.createdAt.seconds * 1000, 'p')}
+                        </span>
                     </div>
                     <div className="MessageContent">{message.text}</div>
                 </div>
             </div>
         </div>
     )
+}
+
+const shouldShowDay = (previous, message) => {
+    const isFirst = !previous;
+    if (isFirst) return true
+
+    const isNewDay = !isSameDay(
+        previous.createdAt.seconds * 1000,
+        message.createdAt.seconds * 1000
+    )
+    return isNewDay
+}
+
+const shouldShowAvatar = (previous, message) => {
+    const isFirst = !previous;
+    if (isFirst) return true
+
+    const differentUser = message.user.id !== previous.user.id
+    if (differentUser) return true
+
+    const hasItBeenAWhile =
+        message.createdAt.seconds -
+        previous.createdAt.seconds > 180
+    return hasItBeenAWhile
 }

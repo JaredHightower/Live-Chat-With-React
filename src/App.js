@@ -67,18 +67,24 @@ const useAuth = () => {
   useEffect(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, firebaseUser => {
-      if (firebaseUser) {
-        const user = {
-          displayName: firebaseUser.displayName,
-          photoUrl: firebaseUser.photoURL,
-          uid: firebaseUser.uid
+      try {
+        if (firebaseUser) {
+          const user = {
+            displayName: firebaseUser.displayName,
+            photoUrl: firebaseUser.photoURL,
+            uid: firebaseUser.uid
+          }
+          const getUser = async () => {
+            const collectionDocs = doc(collection(db, 'users'), user.uid)
+            await setDoc(collectionDocs, user)
+            setUser(user)
+          }
+          return getUser();
         }
-        const collectionRef = collection(db, 'users')
-        const collectionDocs = doc(collectionRef, user.uid)
-        setUser(user)
-        setDoc(collectionDocs, user)
-      } else {
-        setUser(null)
+
+      } catch (error) {
+        setUser(null);
+        throw (error)
       }
     });
     return auth;
