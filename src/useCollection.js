@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { collection, onSnapshot, query, orderBy, where, getDocs } from "firebase/firestore";
 import { db } from './firebase';
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 
-export default function useCollection(path, orderItemsBy) {
+export default function useCollection(path, orderItemsBy, whereData = []) {
     const [docs, setDocs] = useState([]);
+    const [queryField, queryOperator, queryValue] = whereData;
+
     useEffect(() => {
         if (orderItemsBy) {
             const collectionRef = collection(db, path)
@@ -16,6 +18,20 @@ export default function useCollection(path, orderItemsBy) {
                     }))
                 )
             });
+        } else if (queryField) {
+            const getWhereQuery = async () => {
+                try {
+                    const collectionRef = collection(db, path)
+                    const q = query(collectionRef, where(queryField, queryOperator, queryValue))
+                    const queryResults = await getDocs(q);
+                    queryResults.forEach((doc) => {
+                        console.log(doc.id, " => ", doc.data());
+                    });
+                } catch (err) {
+                    console.log(err)
+                }
+            }
+            getWhereQuery()
         } else {
             onSnapshot(collection(db, path), (snapshot) => {
                 setDocs(
@@ -26,6 +42,6 @@ export default function useCollection(path, orderItemsBy) {
                 );
             });
         }
-    }, [path, orderItemsBy]);
+    }, [path, orderItemsBy, queryField, queryOperator, queryValue]);
     return docs
 }

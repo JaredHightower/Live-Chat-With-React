@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, Timestamp } from "firebase/firestore";
+import { getDatabase, ref, onValue, onDisconnect, set, serverTimestamp } from "firebase/database";
 
 const firebaseConfig = initializeApp({
   apiKey: "AIzaSyAbBTNXgod0UkTMsgIxjupgfBk3YFYQ8jk",
@@ -13,6 +14,50 @@ const firebaseConfig = initializeApp({
 
 const db = getFirestore(firebaseConfig);
 
+const rtdb = getDatabase()
 
 
-export { db }
+const setUpPresence = (user) => {
+  const connectedRef = ref(rtdb, '.info/connected');
+  const rtdbRef = ref(rtdb, `status/${user.uid}`);
+  const userDoc = doc(db, `users/${user.uid}`)
+
+  const isOfflineForRTDB = {
+    state: "offline",
+    lastChanged: serverTimestamp()
+  }
+  const isOnlineForRTDB = {
+    state: "online",
+    lastChanged: serverTimestamp()
+  }
+  const isOfflineForFireStore = {
+    state: "offline",
+    lastChanged: Timestamp.now()
+  }
+  const isOnlineForFireStore = {
+    state: "online",
+    lastChanged: Timestamp.now()
+  }
+
+  onValue(connectedRef, async snap => {
+    if (snap.val() === false) {
+      await updateDoc(userDoc, {
+        status: isOfflineForFireStore
+      })
+      return;
+    }
+
+    // is offline
+    await onDisconnect(rtdbRef).set(isOfflineForRTDB)
+
+    //is online
+    await set(rtdbRef, isOnlineForRTDB)
+    await updateDoc(userDoc, {
+      status: isOnlineForFireStore
+    })
+
+  })
+
+}
+
+export { db, setUpPresence }
