@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Nav from "./Nav";
 import Channel from "./Channel";
-import { db } from "./firebase";
+import { db, setUpPresence } from "./firebase";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { Redirect, Router } from '@reach/router';
 import {
@@ -15,7 +15,6 @@ import {
 
 export default function App() {
   const user = useAuth();
-
   const handleLogout = async () => {
     const auth = getAuth();
     await signOut(auth)
@@ -26,8 +25,8 @@ export default function App() {
     <div className="App">
       <Nav user={user} logout={handleLogout} />
       <Router>
-        <Channel path="channel/:channelId" user={user} />
         <Redirect from="/" to="channel/general" />
+        <Channel path="channel/:channelId" user={user} />
       </Router>
     </div>
   ) : (
@@ -63,31 +62,27 @@ const LogIn = () => {
 
 const useAuth = () => {
   const [user, setUser] = useState(null)
+  const auth = getAuth();
 
   useEffect(() => {
-    const auth = getAuth();
-    onAuthStateChanged(auth, firebaseUser => {
-      try {
-        if (firebaseUser) {
-          const user = {
-            displayName: firebaseUser.displayName,
-            photoUrl: firebaseUser.photoURL,
-            uid: firebaseUser.uid
-          }
-          const getUser = async () => {
-            const collectionDocs = doc(collection(db, 'users'), user.uid)
-            await setDoc(collectionDocs, user)
-            setUser(user)
-          }
-          return getUser();
+    return onAuthStateChanged(auth, firebaseUser => {
+      if (firebaseUser) {
+        const user = {
+          displayName: firebaseUser.displayName,
+          photoUrl: firebaseUser.photoURL,
+          uid: firebaseUser.uid
         }
-
-      } catch (error) {
+        const getUser = async () => {
+          const collectionDocs = doc(collection(db, 'users'), user.uid)
+          await setDoc(collectionDocs, user, { merge: true })
+          setUpPresence(user)
+          setUser(user)
+        }
+        getUser()
+      } else {
         setUser(null);
-        throw (error)
       }
     });
-    return auth;
-  }, [])
+  }, [auth])
   return user
 }
