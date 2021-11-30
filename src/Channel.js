@@ -10,12 +10,12 @@ import { doc, updateDoc } from '@firebase/firestore';
 export default function Channel({ user, channelId }) {
     useEffect(() => {
         const makeAnUpdate = async () => {
-            const docRef = await doc(db, `users/${user.uid}`);
+            const docRef = doc(db, `users/${user.uid}`);
             await updateDoc(docRef, {
                 [`channels.${channelId}`]: true
             })
         }
-        makeAnUpdate()
+        return async () => await makeAnUpdate()
     }, [user.uid, channelId])
 
 

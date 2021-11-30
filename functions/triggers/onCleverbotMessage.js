@@ -1,6 +1,8 @@
+require("isomorphic-fetch")
 const functions = require("firebase-functions")
 const admin = require("firebase-admin")
 
+const config = functions.config()
 const db = admin.firestore()
 
 const bot = {
@@ -19,14 +21,39 @@ db.collection("users")
     .doc(bot.uid)
     .set(bot, { merge: true })
 
+const KEY = config.cleverbot.key
+let cs = ""
+
+const sendMessageToBot = async (message) => {
+    const url = `https://www.cleverbot.com/getreply?key=${KEY}&input=${encodeURIComponent(message)}&cs=${cs}`
+    return fetch(url)
+        .then(res => { return res.json() })
+        .then(json => {
+            cs = json.cs
+            return json.output
+        })
+}
+
+const sleep = () => {
+    return new Promise(resolve => {
+        setTimeout(resolve, Math.random() * 3000)
+    })
+}
+
 module.exports = functions.firestore
     .document("channels/general/messages/{messageId}")
-    .onCreate((doc, context) => {
+    .onCreate(async (doc, context) => {
         const message = doc.data()
         if (!message.text.startsWith("@cleverbot")) return;
-        return db.collection("channels/general/messages").add({
-            text: "Hi, Welcome to the channel!",
-            user: db.collection("users").doc("cleverbot"),
-            createdAt: new Date()
+
+        return sleep().then(async () => {
+            await sendMessageToBot(message.text.replace(/^@cleverbot/, "")).then(botResponse => {
+                return db.collection("channels/general/messages").add({
+                    text: botResponse,
+                    user: db.collection("users").doc("cleverbot"),
+                    createdAt: new Date()
+                })
+            })
+
         })
     })

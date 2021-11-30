@@ -4,7 +4,7 @@ const db = admin.firestore()
 
 module.exports = functions.database
     .ref("status/{userId}")
-    .onUpdate((change, context) => {
+    .onUpdate(async (change, context) => {
         const eventStatus = change.after.val()
         const userDoc = db.doc(`users/${context.params.userId}`)
 
