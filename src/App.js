@@ -1,109 +1,88 @@
 import React, { useState, useEffect } from "react";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, onSnapshot } from "firebase/firestore";
+import Nav from "./Nav";
+import Channel from "./Channel";
+import { db, setUpPresence } from "./firebase";
+import { collection, doc, setDoc } from "firebase/firestore";
+import { Redirect, Router } from '@reach/router';
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signOut,
+}
+  from "firebase/auth";
 
-const firebaseConfig = initializeApp({
-  apiKey: "AIzaSyAbBTNXgod0UkTMsgIxjupgfBk3YFYQ8jk",
-  authDomain: "chat-app-66901-dev.firebaseapp.com",
-  databaseURL: "https://chat-app-66901-dev-default-rtdb.firebaseio.com",
-  projectId: "chat-app-66901-dev",
-  storageBucket: "chat-app-66901-dev.appspot.com",
-  messagingSenderId: "556943717887",
-  appId: "1:556943717887:web:4be09fd9ccb6425cade3ca",
-});
+export default function App() {
+  const user = useAuth();
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth)
+  }
 
-const db = getFirestore(firebaseConfig);
 
-function App() {
-  const [channels, setChannels] = useState([]);
-
-  useEffect(
-    () =>
-      onSnapshot(collection(db, "channels"), (snapshot) => {
-        setChannels(
-          snapshot.docs.map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
-          }))
-        );
-      }),
-    []
-  );
-
-  return (
+  return user ? (
     <div className="App">
-      <div className="Nav">
-        <div className="User">
-          <img
-            className="UserImage"
-            alt="whatever"
-            src="https://placekitten.com/64/64"
-          />
-          <div>
-            <div>Jared Hightower</div>
-            <div>
-              <button className="text-button">log out</button>
-            </div>
-          </div>
-        </div>
-        <nav className="ChannelNav">
-          {channels.map((channel) => (
-            <a href={`/channel/${channel.id}`}># {channel.id}</a>
-          ))}
-        </nav>
-      </div>
-      <div className="Channel">
-        <div className="ChannelMain">
-          <div className="ChannelInfo">
-            <div className="Topic">
-              Topic: <input className="TopicInput" value="Awesome stuff" />
-            </div>
-            <div className="ChannelName">#general</div>
-          </div>
-          <div className="Messages">
-            <div className="EndOfMessages">That's every message!</div>
-            <div>
-              <div className="Day">
-                <div className="DayLine" />
-                <div className="DayText">5/6/2021</div>
-                <div className="DayLine" />
-              </div>
-              <div className="Message with-avatar">
-                <div className="Avatar" />
-                <div className="Author">
-                  <div>
-                    <span className="UserName">Jared Hightower </span>
-                    <span className="TimeStamp">3:37 PM</span>
-                  </div>
-                  <div className="MessageContent">Alright, lets do this.</div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div className="Message no-avatar">
-                <div className="MessageContent">works now?</div>
-              </div>
-            </div>
-          </div>
-          <div className="ChatInputBox">
-            <input className="ChatInput" placeholder="Message #general" />
-          </div>
-        </div>
-        <div className="Members">
-          <div>
-            <div className="Member">
-              <div className="MemberStatus offline" />
-              Jared Hightower
-            </div>
-            <div className="Member">
-              <div className="MemberStatus online" />
-              cleverbot
-            </div>
-          </div>
-        </div>
-      </div>
+      <Nav user={user} logout={handleLogout} />
+      <Router>
+        <Redirect from="/" to="channel/general" />
+        <Channel path="channel/:channelId" user={user} />
+      </Router>
     </div>
-  );
+  ) : (
+    <LogIn />
+  )
 }
 
-export default App;
+const LogIn = () => {
+  const [authError, setAuthError] = useState(null)
+  const handleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    const auth = getAuth();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      setAuthError(error)
+    }
+  }
+  return (
+    <div className="login">
+      <h1>Firebase Chat Application!</h1>
+      <button onClick={handleSignIn}>Sign In With Google</button>
+      {authError && (
+        <div>
+          <p>Sorry, there was a problem.</p>
+          <p><i>{authError.message}</i></p>
+          <p>Please try again later</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const useAuth = () => {
+  const [user, setUser] = useState(null)
+  const auth = getAuth();
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, firebaseUser => {
+      if (firebaseUser) {
+        const user = {
+          displayName: firebaseUser.displayName,
+          photoUrl: firebaseUser.photoURL,
+          uid: firebaseUser.uid
+        }
+        const getUser = async () => {
+          const collectionDocs = doc(collection(db, 'users'), user.uid)
+          await setDoc(collectionDocs, user, { merge: true })
+          setUpPresence(user)
+          setUser(user)
+        }
+        getUser()
+      } else {
+        setUser(null);
+      }
+    });
+  }, [auth])
+  return user
+}
